@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA Code Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f7f7f7;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .code {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your 2FA Code</h1>
+        <div class="code" id="code">----</div>
+        <button onclick="generate2FACode()">Generate Code</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script>
+        function base32ToHex(base32) {
+            const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+            let bits = "";
+            let hex = "";
+
+            for (let i = 0; i < base32.length; i++) {
+                const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+                bits += val.toString(2).padStart(5, '0');
+            }
+
+            for (let i = 0; i + 4 <= bits.length; i += 4) {
+                const chunk = bits.substr(i, 4);
+                hex += parseInt(chunk, 2).toString(16);
+            }
+
+            return hex;
+        }
+
+        function generate2FACode() {
+            const secret = "JBSWY3DPEHPK3PXP";  // Replace with your secret key
+            const epoch = Math.round(new Date().getTime() / 1000.0);
+            const time = Math.floor(epoch / 30).toString(16).padStart(16, '0');
+            const key = base32ToHex(secret);
+            const hmac = CryptoJS.HmacSHA1(CryptoJS.enc.Hex.parse(time), CryptoJS.enc.Hex.parse(key));
+            const offset = parseInt(hmac.toString().substr(-1), 16);
+            const otp = (parseInt(hmac.toString().substr(offset * 2, 8), 16) & 0x7fffffff) + '';
+            const code = otp.substr(otp.length - 6, 6);
+
+            document.getElementById('code').textContent = code;
+        }
+    </script>
+</body>
+</html>
